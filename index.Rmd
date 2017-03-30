@@ -1,0 +1,107 @@
+---
+title: "Practical Machine Learning Project"
+author: "A. J. R"
+date: "29 march 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE, echo=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(gtools)
+library(ggplot2)
+library(caret)
+library(parallel)
+library(doParallel)
+library(caretEnsemble)
+
+cluster <- makeCluster(detectCores() - 1) # convention to leave 1 core for OS
+registerDoParallel(cluster)
+
+practicing <- read.csv("D:/cursos/data science/machine learning/pml-training.csv")
+testing <- read.csv("D:/cursos/data science/machine learning/pml-testing.csv")
+
+remove_cols = c("X", "user_name", "raw_timestamp_part_1", "raw_timestamp_part_2", "cvtd_timestamp", "new_window", "num_window")
+
+training <- practicing[, !(names(practicing) %in% remove_cols)]
+testing <- testing[, !(names(testing) %in% remove_cols)]
+
+# removing all columns that have more than 25% invalid data (missing, NA or null)
+invalid_cells <- apply(training, FUN=function(x) { is.na(x) | x == "" | x == "#DIV/0!" }, MARGIN=c(1,2))
+keep_cols <- colSums(invalid_cells) < nrow(training)*0.25
+
+training <- training[, keep_cols]
+testing <- testing[,keep_cols]
+
+inTrain <- createDataPartition(y=training$class,
+                              p=0.75, list=FALSE)
+
+validating <- training[-inTrain,]
+training <- training[inTrain,]
+
+preProcValues <- preProcess(training[,-ncol(training)],method = c("center", "scale"))
+
+trainingTrans <- predict(preProcValues, training[,-ncol(training)])
+validatingTrans <- predict(preProcValues, validating[,-ncol(validating)])
+testingTrans <- predict(preProcValues, testing[,-ncol(testing)])
+trainingTrans$classe <- training$classe
+validatingTrans$classe <- validating$classe
+trainingTrans$classe <- training$classe
+
+nsv <- nearZeroVar(trainingTrans,saveMetrics=TRUE)
+
+```
+
+## Introduction
+[VEL13] collected data from 6 participants making weight lifting exercises. They were instructed to make them correct (class A) and with 4 typical errors (classes B, C, D and E). They intended to predict the type of error made by different measurements. The dataset is published on the site http://groupware.les.infis.puc-rio.br/har. 
+We will in this project, after some data housekeeping, build up a prediction model and apply different learning algorithms on a training set to predict 20 test cases.
+
+## Data Exploration
+The training-dataset downloaded for this project contains originally `r ncol(practicing)` columns and `r nrow(practicing)` rows. Several columns are empty, invalid (`na`) or contain a '`#DIV/0!`'. We eliminate all columns that contain more than 25% of such entries. Over more, there are some informative columns which have nothing to do with the measurements (`X`, `user_name`, `raw_timestamp_part_1`, `raw_timestamp_part_2`, `cvtd_timestamp`, `new_window`, `num_window`). Also these columns are discarted.  
+The measurements have different data ranges and units. So we normalize the data by centring and scaling each measurement with the `preProcess` function. This preprocessing is not so important for some prediction functions like Random Forest, but for others like Support Vector Machines (SVM) it is.  
+We split off the measurements to a training set (75%) and a validating set (25%)
+We test with the function `nearZeroVar` if there exist predictors with a very low variance and thus not usefull for a prediction. There are `r sum(nsv$zeroVar)`, thus the number of variables can not be reduced because of an insufficient variance. 
+
+
+## Model selection
+```{r include=FALSE, echo=FALSE, message=FALSE, warning=FALSE}
+ctrl <- trainControl(method="cv",   # 10 fold cross validation
+                     number=10,
+                     allowParallel = TRUE,
+                     savePredictions = "final")
+
+methods <- c("svmRadial", "rf", "gbm", "nb", "lda")
+models <- caretList(classe ~ ., data=trainingTrans, trControl = ctrl, methodList = methods)
+
+results <- predict(models, validatingTrans)
+
+cmSvmRadial <- confusionMatrix(results[,1], validatingTrans$classe)
+cmRF <- confusionMatrix(results[,2], validatingTrans$classe)
+cmGBM <- confusionMatrix(results[,3], validatingTrans$classe)
+cmNB <- confusionMatrix(results[,4], validatingTrans$classe)
+cmLDA <- confusionMatrix(results[,5], validatingTrans$classe)
+
+stopCluster(cluster)
+registerDoSEQ()
+
+```
+## Model Selection
+We use five different methods to predict the type of exercise made:  
+* Supporting Vector Machine (radial) (SVMradial)  
+* Random Forest (rf)  
+* Generalized Boosted Model (GBM)  
+* Naive Bayes (NB)  
+* Linear Discriminant Model (LDA)  
+
+For each of these predictions we conduct a 10 fold cross validation with a control object produced by `trainControl` and compute the accuracy of the prediction on the scaled validation dataset with the help of the `confusionMatrix`function.  
+
+The accuracies of the 5 predictions are:  
+* `r round(cmSvmRadial$overall['Accuracy']*100,2)`% (SVMradial)  
+* `r round(cmRF$overall['Accuracy']*100,2)`% (rf)  
+* `r round(cmGBM$overall['Accuracy']*100,2)`% (GBM)  
+* `r round(cmNB$overall['Accuracy']*100,2)`% (NB)  
+* `r round(cmLDA$overall['Accuracy']*100,2)`% (LDA)  
+
+Thus, Random Forest produces the best results of the five predictions with an accuracy of over 99%, followed by the Generalized Boosted Model and the Supporting Vector Machine. Compared to these models, Naive Bayes or Linear Discriminant performe rather poor. Further we can observe that these models have rather low covariances (< 75%), thus stacking of these models may produce even better results, but we are allready satisfied with the Random Forest accuracy.
+
+## References
+[VEL13] Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. Qualitative Activity Recognition of Weight Lifting Exercises. Proceedings of 4th International Conference in Cooperation with SIGCHI (Augmented Human '13) . Stuttgart, Germany: ACM SIGCHI, 2013.
