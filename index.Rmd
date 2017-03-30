@@ -84,7 +84,6 @@ stopCluster(cluster)
 registerDoSEQ()
 
 ```
-## Model Selection
 We use five different methods to predict the type of exercise made:  
 * Supporting Vector Machine (radial) (SVMradial)  
 * Random Forest (rf)  

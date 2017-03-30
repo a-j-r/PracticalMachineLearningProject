@@ -136,9 +136,6 @@ We split off the measurements to a training set (75%) and a validating set (25%)
 </div>
 <div id="model-selection" class="section level2">
 <h2>Model selection</h2>
-</div>
-<div id="model-selection-1" class="section level2">
-<h2>Model Selection</h2>
 <p>We use five different methods to predict the type of exercise made:<br />
 * Supporting Vector Machine (radial) (SVMradial)<br />
 * Random Forest (rf)<br />
@@ -146,13 +143,13 @@ We split off the measurements to a training set (75%) and a validating set (25%)
 * Naive Bayes (NB)<br />
 * Linear Discriminant Model (LDA)</p>
 <p>For each of these predictions we conduct a 10 fold cross validation with a control object produced by <code>trainControl</code> and compute the accuracy of the prediction on the scaled validation dataset with the help of the <code>confusionMatrix</code>function.</p>
-<p>The results of the 5 prediction accuracies are:<br />
-* 93.39 (SVMradial)<br />
-* 99.37 (rf)<br />
-* 96.35 (GBM)<br />
-* 75.14 (NB)<br />
-* 70.51 (LDA)</p>
-<p>Thus, Random Forest produces the best results of the five predictions with an accuracy of over 99%, followed by the Generalized Boosted Model and the Supporting Vector Macinie. Compared to these models, Naive Bayes or Linear Discriminant performe rather poor. Further we can observe that these models have a rather low covariance (&lt; 75%), thus stacking of these models may produce even better results, but we are allready satisfied with the Random Forest accuracy.</p>
+<p>The accuracies of the 5 predictions are:<br />
+* 92.31% (SVMradial)<br />
+* 99.43% (rf)<br />
+* 96.15% (GBM)<br />
+* 73.63% (NB)<br />
+* 69.56% (LDA)</p>
+<p>Thus, Random Forest produces the best results of the five predictions with an accuracy of over 99%, followed by the Generalized Boosted Model and the Supporting Vector Machine. Compared to these models, Naive Bayes or Linear Discriminant performe rather poor. Further we can observe that these models have rather low covariances (&lt; 75%), thus stacking of these models may produce even better results, but we are allready satisfied with the Random Forest accuracy.</p>
 </div>
 <div id="references" class="section level2">
 <h2>References</h2>
