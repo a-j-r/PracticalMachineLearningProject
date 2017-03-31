@@ -93,12 +93,12 @@ We use five different methods to predict the type of exercise made:
 
 For each of these predictions we conduct a 10 fold cross validation with a control object produced by `trainControl` and compute the accuracy of the prediction on the scaled validation dataset with the help of the `confusionMatrix`function.  
 
-The accuracies of the 5 predictions are:  
-* `r round(cmSvmRadial$overall['Accuracy']*100,2)`% (SVMradial)  
-* `r round(cmRF$overall['Accuracy']*100,2)`% (rf)  
-* `r round(cmGBM$overall['Accuracy']*100,2)`% (GBM)  
-* `r round(cmNB$overall['Accuracy']*100,2)`% (NB)  
-* `r round(cmLDA$overall['Accuracy']*100,2)`% (LDA)  
+The accuracies and the corresponding out of sampple errors of the 5 predictions are:  
+* SVMradial: `r round(cmSvmRadial$overall['Accuracy']*100,2)`% and `r round((1 - cmSvmRadial$overall['Accuracy'])*100,2)`%  
+* rf: `r round(cmRF$overall['Accuracy']*100,2)`% and `r round((1 - cmRF$overall['Accuracy'])*100,2)`%  
+* GBM: `r round(cmGBM$overall['Accuracy']*100,2)`% and `r round((1 - cmGBM$overall['Accuracy'])*100,2)`%  
+* NB: `r round(cmNB$overall['Accuracy']*100,2)`% and `r round((1 - cmNB$overall['Accuracy'])*100,2)`%  
+* LDA: `r round(cmLDA$overall['Accuracy']*100,2)`% and `r round((1 - cmLDA$overall['Accuracy'])*100,2)`%  
 
 Thus, Random Forest produces the best results of the five predictions with an accuracy of over 99%, followed by the Generalized Boosted Model and the Supporting Vector Machine. Compared to these models, Naive Bayes or Linear Discriminant performe rather poor. Further we can observe that these models have rather low covariances (< 75%), thus stacking of these models may produce even better results, but we are allready satisfied with the Random Forest accuracy.
 
